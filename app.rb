@@ -74,6 +74,7 @@ post '/login' do
     registrar_log("LOGIN_SUCESSO", "Usuário #{params[:username]} logou")
     redirect '/'
   else
+    session[:erro_login] = "Usuário ou senha inválidos"
     registrar_log("LOGIN_FALHA", "Tentativa falha com usuário: #{params[:username]} e senha: #{params[:password]}")
     redirect '/?login_error=1'
   end
