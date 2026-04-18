@@ -16,3 +16,7 @@ gem 'bcrypt'
 # bundle exec ruby app.rb
 # link do app.rb
 # http://localhost:4567
+
+#login web para testes
+# user: admin
+# password: admin-projetobdii
