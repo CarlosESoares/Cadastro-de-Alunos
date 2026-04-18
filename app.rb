@@ -19,8 +19,8 @@ helpers do
       # Conexão de ESCRITA
       @db_admin ||= Mongo::Client.new(['100.70.14.58:27017'], 
                         :database => 'projeto', 
-                        :user => 'dev_user', 
-                        :password => 'Projeto-BDII', 
+                        :user => 'AdminApp_user', 
+                        :password => 'Admin-app-projetobdii', 
                         :auth_source => 'admin')
     else
       # Conexão de LEITURA
@@ -52,7 +52,6 @@ end
 # Rota Principal
 get '/' do
   begin
-    # Agora usamos 'db' em vez de '$db'
     @itens = db[:alunos].find.to_a
     
     if @itens.empty?
@@ -97,7 +96,7 @@ post '/inserir' do
     registrar_log("INSERCAO", "Inseriu o aluno: #{params[:nome]}")
     redirect '/'
   else
-    # Opcional: registrar tentativa de invasão
+    # registra tentativa falha
     registrar_log("TENTATIVA_NEGADA", "Visitante tentou inserir aluno")
     halt 403, "Acesso negado"
   end
@@ -106,7 +105,7 @@ end
 # Rota para deletar um aluno
 get '/deletar/:id' do
   if session[:admin]
-    # Registramos antes de deletar para ter o ID no log
+    # Registra antes de deletar para ter o ID no log
     registrar_log("EXCLUSAO", "Deletou o aluno com ID: #{params[:id]}")
     
     id_bson = BSON::ObjectId.from_string(params[:id])
