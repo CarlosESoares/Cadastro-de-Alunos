@@ -16,22 +16,3 @@ client = Mongo::Client.new(
   :password => 'Projeto-BDII',
   :auth_source => 'admin'
 )
-db = client.database
-alunos = db[:alunos] # Criando uma coleção chamada 'alunos'
-
-# Rota Principal - Mostra o formulário
-get '/' do
-  erb :index
-end
-
-# Rota para Processar o Cadastro
-post '/cadastrar' do
-  # Pega os dados do formulário e salva no Mongo
-  alunos.insert_one({ 
-    nome: params[:nome], 
-    curso: params[:curso], 
-    data: Time.now 
-  })
-  
-  "Aluno #{params[:nome]} cadastrado com sucesso no banco #{db.name}!"
-end
