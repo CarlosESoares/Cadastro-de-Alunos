@@ -8,3 +8,9 @@ gem "rackup", "~> 2.3"
 gem 'bigdecimal'
 gem 'fiddle'
 gem 'rerun'
+gem 'bcrypt'
+
+# instalar as gems:
+# bundle install
+# Executar o app:
+# bundle exec ruby app.rb
