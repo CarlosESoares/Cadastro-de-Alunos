@@ -16,3 +16,9 @@ client = Mongo::Client.new(
   :password => 'Projeto-BDII',
   :auth_source => 'admin'
 )
+db = client.database
+
+# Rota Principal - Mostra o formulário
+get '/' do
+  erb :index
+end
