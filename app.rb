@@ -91,9 +91,9 @@ end
 
 post '/inserir' do
   if session[:admin]
-    db[:alunos].insert_one({ nome: params[:nome] })
+    result = db[:alunos].insert_one({ nome: params[:nome] })
     # Registra a ação
-    registrar_log("INSERCAO", "Inseriu o aluno: #{params[:nome]}")
+    registrar_log("INSERCAO", "Inseriu o aluno com id: #{result.inserted_id}")
     redirect '/'
   else
     # registra tentativa falha
