@@ -14,3 +14,5 @@ gem 'bcrypt'
 # bundle install
 # Executar o app:
 # bundle exec ruby app.rb
+# link do app.rb
+# http://localhost:4567
