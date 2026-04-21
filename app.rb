@@ -21,14 +21,14 @@ helpers do
                         :database => 'projeto', 
                         :user => 'AdminApp_user', 
                         :password => 'Admin-app-projetobdii', 
-                        :auth_source => 'admin')
+                        :auth_source => 'projeto')
     else
       # Conexão de LEITURA
       @db_read ||= Mongo::Client.new(['100.70.14.58:27017'], 
                        :database => 'projeto', 
                        :user => 'app_user', 
                        :password => 'Projeto-APP-acesso', 
-                       :auth_source => 'admin')
+                       :auth_source => 'projeto')
     end
   end
 
