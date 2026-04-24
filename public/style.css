@@ -21,29 +21,6 @@ dialog form {
     margin-top: 20px;
 }
 
-/* Estilizando os inputs */
-dialog input {
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 16px;
-}
-
-/* Estilizando o botão Enviar */
-dialog button[type="submit"] {
-    background-color: #007bff;
-    color: white;
-    padding: 12px;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-dialog button[type="submit"]:hover {
-    background-color: #0056b3;
-}
 
 /* O "X" de fechar no canto */
 #closeModal {
@@ -52,5 +29,38 @@ dialog button[type="submit"]:hover {
     right: 15px;
     font-size: 24px;
     color: #999;
+    cursor:pointer; float:right;
 }
 
+#tabelaAlunos, td, th {
+    width: 90%;
+    border-collapse: collapse;
+    border-bottom: black solid 1px;
+    margin-top: 20px;
+}
+
+.table-container {
+    display: flex;
+    justify-content: center;
+}
+
+.search-container {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    margin-top: 20px;
+}
+
+#inputBusca {
+    padding: 10px;
+    width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+img {
+    width: 24px;
+    height: 24px;
+    cursor:pointer;
+}
