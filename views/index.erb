@@ -5,68 +5,36 @@
     <title>Cadastro de Alunos</title>
     <link rel="stylesheet" type="text/css" href="/style.css">
 </head>
-<body>
+<body data-admin="<%= session[:admin] ? 'true' : 'false' %>">
 
-    <header style="padding: 20px; text-align: right;">
-        <% if session[:admin] %>
-            <span>Bem-vindo, <strong>Admin</strong>!</span>
-            <a href="/logout" style="margin-left: 10px;">Sair</a>
-        <% else %>
-            <button id="openModal">Login</button>
-        <% end %>
-    </header>
+    <%# Input de busca %>
+    <input type="text" id="inputBusca" placeholder="Pesquisar aluno por nome...">
+    <%# Botão para abrir o modal de login %>
+    <button id="buttonLogin" onclick="abrirModal('login')">Login</button>
+    <%# Botão adicionar aluno %>
+    <button id="buttonAdd" onclick="abrirModal('add')">Adicionar Aluno</button>
 
-    <main style="padding: 20px;">
-        <h1>Lista de Alunos</h1>
+    <div class="search-container">
 
-        <table border="1" style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <% if session[:admin] %> <th>Ações</th> <% end %>
-                </tr>
-            </thead>
-            <tbody>
-                <% @itens.each do |aluno| %>
+        <div class="table-container">
+            <table id="tabelaAlunos">
+                <thead>
                     <tr>
-                        <td><%= aluno[:nome] %></td>
-                        
-                        <% if session[:admin] %>
-                            <td>
-                                <a href="/deletar/<%= aluno[:_id] %>" onclick="return confirm('Tem certeza?')">Excluir</a>
-                            </td>
-                        <% end %>
+                        <th>Nome</th>
+                        <th>Turma</th>
+                        <th colspan="4">Ações</th>
                     </tr>
-                <% end %>
-            </tbody>
-        </table>
+                </thead>
+                <tbody id="corpoTabela">
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-        <% if session[:admin] %>
-            <div style="margin-top: 30px; padding: 20px; background: #f4f4f4;">
-                <h3>Cadastrar Novo Aluno</h3>
-                <form action="/inserir" method="post">
-                    <input type="text" name="nome" placeholder="Nome do Aluno" required>
-                    <button type="submit">Cadastrar</button>
-                </form>
-            </div>
-        <% end %>
-    </main>
-
-    <dialog id="loginModal">
-        <div class="modal-content">
-            <span id="closeModal" style="cursor:pointer; float:right;">&times;</span>
-            <h2>Login</h2>
-        
-            <% if session[:erro_login] %>
-                <p style="color: red;"><%= session[:erro_login] %></p>
-                <% session[:erro_login] = nil # Limpa a mensagem após mostrar %>
-            <% end %>
+    <dialog id="Modal">
+        <div class="modal-content"> 
+            <span id="closeModal" style="cursor:pointer; float:right;">&times;</span>        
             
-            <form action="/login" method="post">
-                <input type="text" name="username" placeholder="Username" required>
-                <input type="password" name="password" placeholder="Password" required>
-                <button type="submit">Enviar</button>
-            </form>
         </div>
     </dialog>
 
