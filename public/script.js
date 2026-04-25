@@ -40,6 +40,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         setTimeout(() => abrirModal('login'), 100);
         window.history.replaceState({}, document.title, "/");
     }
+
+    configurarBotaoAuth();
 });
 
 function renderizar(alunos) {
@@ -233,5 +235,36 @@ async function realizarFetch(url, metodo, corpo = null) {
     } catch (e) {
         console.error(e);
         alert("Erro de conexão.");
+    }
+}
+
+function configurarBotaoAuth() {
+    const btnAuth = document.getElementById("buttonLogin");
+    if (!btnAuth) return;
+
+    // Verifica se o atributo data-admin é true (indicando que está logado)
+    const estaLogado = document.body.getAttribute("data-admin") === "true";
+
+    if (estaLogado) {
+        btnAuth.innerText = "Logout";
+        // Altera a função do clique para fazer logout
+        btnAuth.onclick = fazerLogout;
+    } else {
+        btnAuth.innerText = "Login";
+        btnAuth.onclick = () => abrirModal('login');
+    }
+}
+
+async function fazerLogout() {
+    try {
+        // Envia a requisição de logout para o seu backend Ruby
+        const response = await fetch("/logout", { method: "GET" });
+        
+        if (response.ok) {
+            alert("Você saiu do sistema.");
+            location.reload(); // Recarrega para limpar o estado de admin
+        }
+    } catch (erro) {
+        console.error("Erro ao deslogar:", erro);
     }
 }

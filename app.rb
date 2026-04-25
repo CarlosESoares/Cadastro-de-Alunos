@@ -81,7 +81,7 @@ end
 
 # Rota do Login
 post '/login' do
-  user_doc = db[:usuarios].find(username: params[:username]).first
+  user_doc = db[:users].find(username: params[:username]).first
   if user_doc && BCrypt::Password.new(user_doc[:password_hash]) == params[:password]
     session[:admin] = true
     registrar_log("LOGIN_SUCESSO", "Usuário #{params[:username]} logou")
@@ -92,14 +92,15 @@ post '/login' do
     redirect '/?login_error=1'
   end
 end
-# get '/logout' do
-#   # Registra que o admin está saindo antes de apagar a sessão
-#   if session[:admin]
-#     registrar_log("LOGOUT", "O administrador encerrou a sessão")
-#   end
-#   session.clear
-#   redirect '/'
-# end
+
+get '/logout' do
+  # Registra que o admin está saindo antes de apagar a sessão
+  if session[:admin]
+    registrar_log("LOGOUT", "O administrador encerrou a sessão")
+  end
+  session.clear
+  redirect '/'
+end
 # post '/inserir' do
 #   if session[:admin]
 #     result = db[:alunos].insert_one({ nome: params[:nome] })
