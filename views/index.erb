@@ -5,7 +5,7 @@
     <title>Cadastro de Alunos</title>
     <link rel="stylesheet" type="text/css" href="/style.css">
 </head>
-<body data-admin="<%= session[:admin] ? 'true' : 'false' %>">
+<body data-admin="<%= session[:admin] ? 'false' : 'true' %>">
 
     <%# Input de busca %>
     <input type="text" id="inputBusca" placeholder="Pesquisar aluno por nome...">
@@ -20,7 +20,7 @@
             <table id="tabelaAlunos">
                 <thead>
                     <tr>
-                        <th>Nome</th>
+                        <th id="teste">Nome</th>
                         <th>Turma</th>
                         <th colspan="4">Ações</th>
                     </tr>

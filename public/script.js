@@ -72,10 +72,10 @@ function gerarDisciplinas(aluno, modo) {
     return disciplinas.map(([nome, nota]) => {
         if (modo === "view") return `<li><strong>${nome.replace(/_/g, " ")}:</strong> ${nota}</li>`;
         return `
-            <div class="input-group-nota" style="margin-top:10px">
-                <input type="text" value="${nome}" class="nova-materia-nome" style="width: 40%">
-                <input type="number" step="0.1" value="${nota}" class="nova-materia-nota" style="width: 20%">
-                <button type="button" onclick="this.parentElement.remove()" style="color:red; border:none; background:none; cursor:pointer;">&times;</button>
+            <div class="input-group-nota">
+                <input type="text" value="${nome}" class="nova-materia-nome">
+                <input type="number" step="0.1" value="${nota}" class="nova-materia-nota">
+                <button type="button" onclick="this.parentElement.remove()">&times;</button>
             </div>`;
     }).join('');
 }
@@ -85,9 +85,9 @@ function criarLinhaMateria() {
     div.className = 'input-group-nota';
     div.style.marginTop = "10px";
     div.innerHTML = `
-        <input type="text" placeholder="Matéria" class="nova-materia-nome" style="width: 40%">
-        <input type="number" step="0.1" placeholder="Nota" class="nova-materia-nota" style="width: 20%">
-        <button type="button" onclick="this.parentElement.remove()" style="color:red; border:none; background:none; cursor:pointer;">&times;</button>`;
+        <input type="text" placeholder="Matéria" class="nova-materia-nome">
+        <input type="number" step="0.1" placeholder="Nota" class="nova-materia-nota">
+        <button type="button" onclick="this.parentElement.remove()">&times;</button>`;
     return div;
 }
 
@@ -155,7 +155,7 @@ function abrirModal(acao, alunoId = null) {
                 <span id="closeModal">&times;</span>
                 <h2>Excluir</h2>
                 <p>Deseja remover <b>${aluno?.nome}</b>?</p>
-                <button id="confirmRemove" style="background-color:red; color:white">Remover</button>
+                <button id="confirmRemove">Remover</button>
                 <button class="cancel-button">Cancelar</button>`;
             
             document.getElementById('confirmRemove').onclick = () => deletarAluno(aluno.id);
