@@ -1,66 +1,238 @@
-/* Estilo do Pop-up (Dialog) */
-dialog {
-    border: none;
-    border-radius: 12px;
-    padding: 30px;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+/* resetando o body */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* Fundo escurecido mais suave */
-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.7);
+/* Importando fonte */
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
+
+/* estilo global */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #eef4f9;
+    color: #2c3e50; 
+    line-height: 1.5;
 }
 
-/* Organizando o formulário em coluna */
-dialog form {
+/* Mudando a fonte dos títulos */
+h1, h2, h3, #tabelaAlunos th {
+    font-family: 'Merriweather', serif;
+    letter-spacing: 0.5px;
+}
+
+
+/* cabeçalho principal */
+.cabecalho-principal {
     display: flex;
-    flex-direction: column; /* Coloca um embaixo do outro */
-    gap: 15px;              /* Espaço entre os campos */
-    margin-top: 20px;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #2E4A62, #5f88a5);
+    color: white; 
+    padding: 10px 40px;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-bottom: 25px;
+}
+
+/* logo do cabeçalho */
+.cabecalho-principal .logo {
+    height: 110px;
+}
+
+ /* texto do cabeçalho */
+.titulo-container {
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+}
+/* título principal */
+.cabecalho-principal h1 {
+    font-size: 42px;
+    font-weight: 700;
+    white-space: nowrap;
+    margin: 0;
+}
+
+/* subtítulo */
+.subtitulo {
+    font-size: 20px;
+    opacity: 0.6;
+    margin-top: -12px;
 }
 
 
-/* O "X" de fechar no canto */
-#closeModal {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    font-size: 24px;
-    color: #999;
-    cursor:pointer; float:right;
+/* controles (busca e botões) */
+.controls-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    flex-wrap: wrap; /* (quebra linha em telas pequenas) */
 }
 
-#tabelaAlunos, td, th {
-    width: 90%;
-    border-collapse: collapse;
-    border-bottom: black solid 1px;
-    margin-top: 20px;
+/* botões de pesquisar*/
+button {
+    background: linear-gradient(135deg, #6A9FB5, #4f7d95); 
+    color: rgb(255, 255, 255);
+    border: none;
+    border-radius: 8px; 
+    padding: 10px 18px;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.25s ease; 
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1); 
 }
 
+/* hover dos botões (quando passa o mouse por cima) */
+button:hover {
+    background: linear-gradient(135deg, #2E4A62, #1f3447); /*cor gradiente*/
+    transform: translateY(-1px); /* efeito*/
+}
+
+.cancel-button {
+    background: linear-gradient(135deg, #e53935, #c62828);
+}
+
+/* input do texto */
+input[type="text"], input[type="password"], input[type="number"] {
+    padding: 10px;
+    border: 1px solid #c7d7e2; 
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.25s;
+    max-width: 400px;
+    background-color: #fdfefe; 
+}
+
+/* efeito para quando "ativo"*/
+input:focus {
+    border-color: #6A9FB5;
+    box-shadow: 0 0 6px rgba(106, 159, 181, 0.3);
+}
+
+/* tabela de alunos */
 .table-container {
     display: flex;
     justify-content: center;
+    width: 100%;
+    padding: 0 20px;
+    overflow-x: auto;
 }
 
-.search-container {
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    margin-top: 20px;
+#tabelaAlunos {
+    width: 100%;
+    max-width: 1100px;
+    border-collapse: collapse;
+    background-color: white;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    border-radius: 10px;
+    overflow: hidden;
 }
 
-#inputBusca {
-    padding: 10px;
-    width: 300px;
-    border: 1px solid #000000;
+#tabelaAlunos th {
+    background: linear-gradient(135deg, #2E4A62, #1f3447); /*efeito no cabeçalho da tabela*/
+    color: white;
+    padding: 14px;
+    text-align: left;
+    font-size: 14px;
+}
+
+#tabelaAlunos td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e1e8ed; 
+    font-size: 14px;
+}
+
+#tabelaAlunos tbody tr:nth-child(even) {
+    background-color: #f7fbff; /* alternar cores colocando essa cor nos elementos pares */
+}
+
+/* reação ao passar mouse por cima*/
+#tabelaAlunos tbody tr:hover {
+    background-color: #dce8f2;
+    transition: 0.2s;
+}
+
+/* icones */
+td img {
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    padding: 6px;
     border-radius: 6px;
-    font-size: 13px;
+    transition: all 0.2s;
+}
+/* reação ao passar mouse por cima do icone */
+td img:hover {
+    background-color: #c7d7e2;
+    transform: scale(1.1); 
 }
 
-img {
-    width: 24px;
-    height: 24px;
-    cursor:pointer;
+/* pop up do modal */
+dialog {
+    border: none;
+    border-radius: 14px;
+    padding: 30px;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25); 
+    margin: auto;
+}
+
+/* fundo escuro atrás do pop up */
+dialog::backdrop {
+    background: rgba(30, 52, 71, 0.65);
+    backdrop-filter: blur(5px);
+}
+
+/* botão de fechar do pop up*/
+#closeModal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    color: #888;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+/* reação quando o mouse passa em cima do botãod de fechar pop up */
+#closeModal:hover {
+    color: #e53935;
+}
+/* organiza o conteúdo do pop up */
+dialog form, .modal-content, #viewCurso {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Container de busca (input e botões) */
+.controls-container {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* centraliza o bloco todo */
+    gap: 15px;
+    width: 100%;
+}
+
+/* input no centro*/
+#inputBusca {
+    flex: 1;
+    max-width: 600px;
+    padding: 14px 18px; 
+    font-size: 16px; 
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* botões ficam juntos na direita */
+.botoes-direita {
+    display: flex;
+    gap: 10px;
 }

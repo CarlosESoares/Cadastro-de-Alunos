@@ -6,13 +6,25 @@
     <link rel="stylesheet" type="text/css" href="/style.css">
 </head>
 <body data-admin="<%= session[:admin] ? 'false' : 'true' %>">
-
-    <%# Input de busca %>
-    <input type="text" id="inputBusca" placeholder="Pesquisar aluno por nome...">
-    <%# Botão para abrir o modal de login %>    
-    <button id="buttonLogin" onclick="abrirModal('login')">Login</button>
-    <%# Botão adicionar aluno %>
-    <button id="buttonAdd" onclick="abrirModal('add')">Adicionar Aluno</button>
+    <%# div para organização do cabeçalho %>
+    <div class="cabecalho-principal">
+        <%# div do titulo %>
+        <div class="titulo-container">
+            <h1>Cadastro de Aluno</h1>
+            <span class="subtitulo">Sistema Acadêmico</span>
+        </div>
+        <%# div da pesquisa %>
+        <div class="controls-container">
+            <%# Input de busca %>
+            <input type="text" id="inputBusca" placeholder="Pesquisar aluno por nome...">
+            <%# Botão para abrir o modal de login %>    
+            <button id="buttonLogin" onclick="abrirModal('login')">Login</button>
+            <%# Botão adicionar aluno %>
+            <button id="buttonAdd" onclick="abrirModal('add')">Adicionar Aluno</button>
+        </div>
+        <%# logo %>
+        <img src="/imgs/logoo.png" alt ="Logo" class="logo">
+    </div>
 
     <div class="search-container">
 
