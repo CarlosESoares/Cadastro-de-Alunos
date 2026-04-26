@@ -122,6 +122,7 @@ input:focus {
     width: 100%;
     padding: 0 20px;
     overflow-x: auto;
+    margin-bottom: 30px;
 }
 
 #tabelaAlunos {
@@ -144,17 +145,17 @@ input:focus {
 
 #tabelaAlunos td {
     padding: 12px 15px;
-    border-bottom: 1px solid #e1e8ed; 
+    border-bottom: 1px solid #bdcdda; 
     font-size: 14px;
 }
 
 #tabelaAlunos tbody tr:nth-child(even) {
-    background-color: #f7fbff; /* alternar cores colocando essa cor nos elementos pares */
+    background-color: #dce8f2; /* alternar cores colocando essa cor nos elementos pares */
 }
 
 /* reação ao passar mouse por cima*/
 #tabelaAlunos tbody tr:hover {
-    background-color: #dce8f2;
+    background-color: #ccddeb;
     transition: 0.2s;
 }
 
@@ -235,4 +236,69 @@ dialog form, .modal-content, #viewCurso {
 .botoes-direita {
     display: flex;
     gap: 10px;
+}
+
+.search-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+
+.topo-tabela {
+    width: 100%;
+    max-width: 1100px;
+    padding: 0 20px;
+    margin-bottom: 10px;
+
+    display: flex;
+    justify-content: flex-start;
+}
+.select-wrapper {
+    position: relative;
+    width: 240px;
+}
+
+#filtroTurma {
+    width: 100%;
+    padding: 12px 45px 12px 15px;
+    border-radius: 12px;
+    border: 1px solid #c7d7e2;
+    font-size: 15px;
+
+    background: linear-gradient(135deg, #ffffff, #f1f7fb);
+    color: #2c3e50;
+
+    cursor: pointer;
+
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    transition: all 0.25s ease;
+}
+
+/* hover */
+#filtroTurma:hover {
+    border-color: #6A9FB5;
+    transform: translateY(-1px);
+}
+
+/* foco */
+#filtroTurma:focus {
+    outline: none;
+    border-color: #6A9FB5;
+    box-shadow: 0 0 8px rgba(106, 159, 181, 0.4);
+}
+
+/* seta customizada */
+.select-wrapper::after {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #2c3e50;
+    pointer-events: none;
 }
