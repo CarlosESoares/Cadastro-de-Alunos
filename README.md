@@ -83,14 +83,14 @@ http://localhost:4567
 
 ## 📸 Demonstração
 
-Adicione aqui prints da aplicação:
 *Tela de acesso 
 <img width="1920" height="888" alt="image" src="https://github.com/user-attachments/assets/59771ab8-cf38-4f81-89e0-96e5618440ce" />
+
 * Tela de cadastro
-* <img width="1920" height="879" alt="image" src="https://github.com/user-attachments/assets/130667b3-b6f7-4d25-bfce-f22f6ab233a7" />
+  <img width="1920" height="879" alt="image" src="https://github.com/user-attachments/assets/130667b3-b6f7-4d25-bfce-f22f6ab233a7" />
 
 * Lista de alunos
-* <img width="1902" height="843" alt="image" src="https://github.com/user-attachments/assets/89fd780f-7450-490f-ae2d-1769c396c791" />
+  <img width="1902" height="843" alt="image" src="https://github.com/user-attachments/assets/89fd780f-7450-490f-ae2d-1769c396c791" />
 
 *Tela de consulta de dados
 <img width="1919" height="888" alt="image" src="https://github.com/user-attachments/assets/5ce28ef4-1fbe-4b06-8246-ad9e1556d2fd" />
