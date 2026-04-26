@@ -1,5 +1,7 @@
 // Variável global para armazenar os dados
 let listaAlunos = [];
+let listaTurmas = [];
+
 const modal = document.getElementById('Modal');
 const modalContent = modal.querySelector('.modal-content');
 
@@ -33,6 +35,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         const clicouFora = (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom);
         if (clicouFora || e.target.id === "closeModal" || e.target.classList.contains("cancel-button")) {
             modal.close();
+        }
+    });
+
+    await carregarOpcoesTurmas();
+
+    const filtroTurma = document.getElementById("filtroTurma");
+    filtroTurma?.addEventListener("change", (e) => {
+        const turmaSelecionada = e.target.value;
+        
+        if (turmaSelecionada === "") {
+            // Se escolher "Todas", renderiza a lista completa
+            renderizar(listaAlunos);
+        } else {
+            // Filtra a lista original apenas pelos alunos daquela turma
+            const filtrados = listaAlunos.filter(aluno => aluno.turma === turmaSelecionada);
+            renderizar(filtrados);
         }
     });
 
@@ -266,5 +284,21 @@ async function fazerLogout() {
         }
     } catch (erro) {
         console.error("Erro ao deslogar:", erro);
+    }
+}
+
+async function carregarOpcoesTurmas() {
+    try {
+        const response = await fetch("/turmas");
+        listaTurmas = await response.json();
+        
+        const select = document.getElementById("filtroTurma");
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Todas as Turmas</option>' + 
+            listaTurmas.map(t => `<option value="${t}">${t}</option>`).join('');
+            
+    } catch (erro) {
+        console.error("Erro ao carregar turmas:", erro);
     }
 }

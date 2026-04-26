@@ -101,6 +101,18 @@ get '/logout' do
   session.clear
   redirect '/'
 end
+
+
+get '/turmas' do
+  content_type :json
+  begin
+    turmas = db[:alunos].distinct(:turma).compact.sort
+    turmas.to_json
+  rescue => e
+    puts "Erro ao buscar turmas: #{e.message}"
+    [].to_json
+  end
+end
 # post '/inserir' do
 #   if session[:admin]
 #     result = db[:alunos].insert_one({ nome: params[:nome] })
