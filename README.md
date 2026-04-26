@@ -84,7 +84,7 @@ http://localhost:4567
 ## 📸 Demonstração
 
 * Tela de acesso 
-<img width="1920" height="888" alt="image" src="https://github.com/user-attachments/assets/59771ab8-cf38-4f81-89e0-96e5618440ce" />
+  <img width="1920" height="888" alt="image" src="https://github.com/user-attachments/assets/59771ab8-cf38-4f81-89e0-96e5618440ce" />
 
 * Tela de cadastro
   <img width="1920" height="879" alt="image" src="https://github.com/user-attachments/assets/130667b3-b6f7-4d25-bfce-f22f6ab233a7" />
@@ -93,13 +93,13 @@ http://localhost:4567
   <img width="1902" height="843" alt="image" src="https://github.com/user-attachments/assets/89fd780f-7450-490f-ae2d-1769c396c791" />
 
 * Tela de consulta de dados
-<img width="1919" height="888" alt="image" src="https://github.com/user-attachments/assets/5ce28ef4-1fbe-4b06-8246-ad9e1556d2fd" />
+  <img width="1919" height="888" alt="image" src="https://github.com/user-attachments/assets/5ce28ef4-1fbe-4b06-8246-ad9e1556d2fd" />
 
-*T ela de edicao de dados sensiveis
-<img width="1920" height="875" alt="image" src="https://github.com/user-attachments/assets/faa6cfce-525e-472f-a4d2-7c9b8afadd7d" />
+* Tela de edicao de dados sensiveis
+  <img width="1920" height="875" alt="image" src="https://github.com/user-attachments/assets/faa6cfce-525e-472f-a4d2-7c9b8afadd7d" />
 
 * Tela de edição de notas e materias 
-<img width="1920" height="878" alt="image" src="https://github.com/user-attachments/assets/a0b64c5c-d540-4502-b76a-cc289d31a4ee" />
+  <img width="1920" height="878" alt="image" src="https://github.com/user-attachments/assets/a0b64c5c-d540-4502-b76a-cc289d31a4ee" />
 
 ---
 
