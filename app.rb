@@ -78,6 +78,132 @@ end
     [].to_json
   end
 end
+#rota do listar por tudo 
+get '/alunos/turma/:turma' do
+  content_type :json
+
+  begin
+    turma = params[:turma]
+
+    alunos = db[:alunos].find({ turma: turma }).to_a
+
+    alunos.map! do |doc|
+      {
+        id: doc[:_id].to_s,
+        nome: doc[:nome],
+        matricula: doc[:matricula],
+        turma: doc[:turma],
+        disciplinas: doc[:disciplinas] || {}
+      }
+    end
+
+    alunos.to_json
+
+  rescue => e
+    puts "Erro ao buscar por turma: #{e.message}"
+    [].to_json
+  end
+end
+
+#rota do cadastrar
+post '/alunos' do
+  content_type :json
+
+  # 🔐 Bloqueia se não for admin
+  unless session[:admin]
+    registrar_log("TENTATIVA_NEGADA", "Tentou inserir aluno sem permissão")
+    halt 403, { erro: "Acesso negado" }.to_json
+  end
+
+  begin
+    # 📥 Lê o JSON enviado pelo fetch
+    data = JSON.parse(request.body.read)
+
+    # 🧪 Validação básica
+    nome = data["nome"]&.strip
+    matricula = data["matricula"]&.strip
+    turma = data["turma"]&.strip
+    disciplinas = data["disciplinas"] || {}
+
+    if nome.nil? || nome.empty? || matricula.nil? || matricula.empty?
+      halt 400, { erro: "Nome e matrícula são obrigatórios" }.to_json
+    end
+
+    # 💾 Inserção no banco
+    result = db[:alunos].insert_one({
+      nome: nome,
+      matricula: matricula,
+      turma: turma,
+      disciplinas: disciplinas
+    })
+
+    # 📝 Log
+    registrar_log("INSERCAO", "Aluno criado ID: #{result.inserted_id}")
+
+    # 📤 Resposta
+    status 201
+    {
+      mensagem: "Aluno criado com sucesso",
+      id: result.inserted_id.to_s
+    }.to_json
+
+  rescue => e
+    puts "Erro ao inserir aluno: #{e.message}"
+    halt 500, { erro: "Erro interno no servidor" }.to_json
+  end
+end
+#rota do deletar
+delete '/alunos/:id' do
+  content_type :json
+
+  halt 403, { erro: "Acesso negado" }.to_json unless session[:admin]
+
+  begin
+    id = params[:id]
+
+    result = db[:alunos].delete_one({ _id: BSON::ObjectId(id) })
+
+    if result.deleted_count == 0
+      halt 404, { erro: "Aluno não encontrado" }.to_json
+    end
+
+    { mensagem: "Aluno removido com sucesso" }.to_json
+
+  rescue => e
+    puts "Erro ao deletar: #{e.message}"
+    halt 500, { erro: "Erro ao deletar aluno" }.to_json
+  end
+end
+put '/alunos/:id/notas' do
+  content_type :json
+
+  halt 403, { erro: "Acesso negado" }.to_json unless session[:admin]
+
+  begin
+    id = params[:id]
+
+    request.body.rewind
+    data = JSON.parse(request.body.read)
+
+    disciplinas = data["disciplinas"] || {}
+
+    result = db[:alunos].update_one(
+      { _id: BSON::ObjectId(id) },
+      { "$set" => { disciplinas: disciplinas } }
+    )
+
+    if result.matched_count == 0
+      halt 404, { erro: "Aluno não encontrado" }.to_json
+    end
+
+    { mensagem: "Notas atualizadas com sucesso" }.to_json
+
+  rescue => e
+    puts "Erro ao atualizar notas: #{e.message}"
+    halt 500, { erro: "Erro ao atualizar notas" }.to_json
+  end
+end
+
 
 # Rota do Login
 post '/login' do
@@ -113,27 +239,31 @@ get '/turmas' do
     [].to_json
   end
 end
-# post '/inserir' do
-#   if session[:admin]
-#     result = db[:alunos].insert_one({ nome: params[:nome] })
-#     # Registra a ação
-#     registrar_log("INSERCAO", "Inseriu o aluno com id: #{result.inserted_id}")
-#     redirect '/'
-#   else
-#     # registra tentativa falha
-#     registrar_log("TENTATIVA_NEGADA", "Visitante tentou inserir aluno")
-#     halt 403, "Acesso negado"
-#   end
-# end
-# # Rota para deletar um aluno
-# get '/deletar/:id' do
-#   if session[:admin]
-#     # Registra antes de deletar para ter o ID no log
-#     registrar_log("EXCLUSAO", "Deletou o aluno com ID: #{params[:id]}")
-#     id_bson = BSON::ObjectId.from_string(params[:id])
-#     db[:alunos].delete_one({ _id: id_bson })
-#   else
-#     registrar_log("TENTATIVA_NEGADA", "Visitante tentou deletar ID: #{params[:id]}")
-#   end
-#   redirect '/'
-# end
+#  post '/inserir' do
+#    if session[:admin]
+#      result = db[:alunos].insert_one({ nome: params[:nome] })
+#      # Registra a ação
+#      registrar_log("INSERCAO", "Inseriu o aluno com id: #{result.inserted_id}")
+#      redirect '/'
+#    else
+#      # registra tentativa falha
+#      registrar_log("TENTATIVA_NEGADA", "Visitante tentou inserir aluno")
+#      halt 403, "Acesso negado"
+#    end
+#  end
+
+
+
+ 
+#  # Rota para deletar um aluno
+#  get '/deletar/:id' do
+#    if session[:admin]
+#      # Registra antes de deletar para ter o ID no log
+#      registrar_log("EXCLUSAO", "Deletou o aluno com ID: #{params[:id]}")
+#      id_bson = BSON::ObjectId.from_string(params[:id])
+#      db[:alunos].delete_one({ _id: id_bson })
+#    else
+#      registrar_log("TENTATIVA_NEGADA", "Visitante tentou deletar ID: #{params[:id]}")
+#    end
+#    redirect '/'
+#  end
