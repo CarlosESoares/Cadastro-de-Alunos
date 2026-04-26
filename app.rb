@@ -174,28 +174,78 @@ delete '/alunos/:id' do
     halt 500, { erro: "Erro ao deletar aluno" }.to_json
   end
 end
-put '/alunos/:id/notas' do
+
+
+put '/alunos/:id' do
   content_type :json
 
+  # 🔐 Verifica permissão
   halt 403, { erro: "Acesso negado" }.to_json unless session[:admin]
 
   begin
-    id = params[:id]
+    # 📥 Lê o JSON do fetch
+    request.body.rewind
+    data = JSON.parse(request.body.read)
 
+    nome = data["nome"]&.strip
+    turma = data["turma"]&.strip
+
+    # 🧪 Validação básica
+    if nome.nil? || nome.empty?
+      halt 400, { erro: "Nome é obrigatório" }.to_json
+    end
+
+    # 💾 Atualiza SOMENTE nome e turma
+    result = db[:alunos].update_one(
+      { _id: BSON::ObjectId(params[:id]) },
+      {
+        "$set" => {
+          nome: nome,
+          turma: turma
+        }
+      }
+    )
+
+    # 🔎 Verifica se encontrou o aluno
+    if result.matched_count == 0
+      halt 404, { erro: "Aluno não encontrado" }.to_json
+    end
+
+    # 📤 Resposta
+    { mensagem: "Aluno atualizado com sucesso" }.to_json
+
+  rescue => e
+    puts "Erro ao atualizar aluno: #{e.message}"
+    halt 500, { erro: "Erro interno no servidor" }.to_json
+  end
+end
+
+#rota das notas 
+put '/alunos/:id/notas' do
+  content_type :json
+
+  # 🔐 Verifica se é admin
+  halt 403, { erro: "Acesso negado" }.to_json unless session[:admin]
+
+  begin
+    # 📥 Lê o JSON enviado pelo fetch
     request.body.rewind
     data = JSON.parse(request.body.read)
 
     disciplinas = data["disciplinas"] || {}
 
+    # 💾 Atualiza SOMENTE as notas
     result = db[:alunos].update_one(
-      { _id: BSON::ObjectId(id) },
+      { _id: BSON::ObjectId(params[:id]) },
       { "$set" => { disciplinas: disciplinas } }
     )
 
+    # 🔎 Verifica se encontrou o aluno
     if result.matched_count == 0
       halt 404, { erro: "Aluno não encontrado" }.to_json
     end
 
+    # 📤 Resposta
     { mensagem: "Notas atualizadas com sucesso" }.to_json
 
   rescue => e
@@ -203,7 +253,6 @@ put '/alunos/:id/notas' do
     halt 500, { erro: "Erro ao atualizar notas" }.to_json
   end
 end
-
 
 # Rota do Login
 post '/login' do
