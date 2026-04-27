@@ -1,6 +1,7 @@
 // Variável global para armazenar os dados
 let listaAlunos = [];
 let listaTurmas = [];
+const LIMITE_LINHAS = 500;
 
 const modal = document.getElementById('Modal');
 const modalContent = modal.querySelector('.modal-content');
@@ -15,11 +16,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             String(a.nome || "").localeCompare(String(b.nome || ""))
         );
 
-        renderizar(listaAlunos);
+        // Aplica limite inicial
+        renderizar(listaAlunos.slice(0, LIMITE_LINHAS));
     } catch (erro) {
         console.error("Erro ao buscar dados:", erro);
     }
 
+    // Filtro de busca otimizado
     const inputBusca = document.getElementById("inputBusca");
     inputBusca?.addEventListener("input", (e) => {
         const termo = e.target.value.toLowerCase();
@@ -27,13 +30,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             (aluno.nome || "").toLowerCase().includes(termo) ||
             String(aluno.matricula || "").toLowerCase().includes(termo)
         );
-        renderizar(filtrados);
+        renderizar(filtrados.slice(0, LIMITE_LINHAS));
     });
 
     modal.addEventListener("click", (e) => {
-        const rect = modal.getBoundingClientRect();
-        const clicouFora = (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom);
-        if (clicouFora || e.target.id === "closeModal" || e.target.classList.contains("cancel-button")) {
+        if (e.target.id === "closeModal" || e.target.classList.contains("cancel-button")) {
             modal.close();
         }
     });
@@ -43,15 +44,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const filtroTurma = document.getElementById("filtroTurma");
     filtroTurma?.addEventListener("change", (e) => {
         const turmaSelecionada = e.target.value;
-        
-        if (turmaSelecionada === "") {
-            // Se escolher "Todas", renderiza a lista completa
-            renderizar(listaAlunos);
-        } else {
-            // Filtra a lista original apenas pelos alunos daquela turma
-            const filtrados = listaAlunos.filter(aluno => aluno.turma === turmaSelecionada);
-            renderizar(filtrados);
-        }
+        const filtrados = turmaSelecionada === ""
+            ? listaAlunos
+            : listaAlunos.filter(aluno => aluno.turma === turmaSelecionada);
+
+        renderizar(filtrados.slice(0, LIMITE_LINHAS));
     });
 
     if (new URLSearchParams(window.location.search).has('login_error')) {
@@ -66,6 +63,7 @@ function renderizar(alunos) {
     const corpo = document.querySelector("#corpoTabela");
     if (!corpo) return;
 
+    // Renderização em lote para melhor performance
     corpo.innerHTML = alunos.map(aluno => `
         <tr>
             <td>${aluno.nome}<br>${aluno.matricula}</td>
@@ -82,37 +80,11 @@ function verificarAcesso() {
     return document.body.getAttribute("data-admin") === "true";
 }
 
-// FUNÇÕES AUXILIARES (Definidas antes para evitar o erro de ReferenceError)
-function gerarDisciplinas(aluno, modo) {
-    const disciplinas = Object.entries(aluno?.disciplinas || {});
-    if (disciplinas.length === 0) return `<p class="aviso-vazio">Nenhuma disciplina.</p>`;
-
-    return disciplinas.map(([nome, nota]) => {
-        if (modo === "view") return `<li><strong>${nome.replace(/_/g, " ")}:</strong> ${nota}</li>`;
-        return `
-            <div class="input-group-nota">
-                <input type="text" value="${nome}" class="nova-materia-nome">
-                <input type="number" step="0.1" value="${nota}" class="nova-materia-nota">
-                <button type="button" onclick="this.parentElement.remove()">&times;</button>
-            </div>`;
-    }).join('');
-}
-
-function criarLinhaMateria() {
-    const div = document.createElement('div');
-    div.className = 'input-group-nota';
-    div.style.marginTop = "10px";
-    div.innerHTML = `
-        <input type="text" placeholder="Matéria" class="nova-materia-nome">
-        <input type="number" step="0.1" placeholder="Nota" class="nova-materia-nota">
-        <button type="button" onclick="this.parentElement.remove()">&times;</button>`;
-    return div;
-}
-
-// FUNÇÃO PRINCIPAL DO MODAL
 function abrirModal(acao, alunoId = null) {
-    if (acao !== 'login' && !verificarAcesso()) {
-        return alert("Acesso negado: Você não tem permissão.");
+    // 'view' e 'login' são liberados para todos. Outras ações exigem admin.
+    const acoesPublicas = ['login', 'view'];
+    if (!acoesPublicas.includes(acao) && !verificarAcesso()) {
+        return alert("Acesso negado: Somente administradores podem realizar alterações.");
     }
 
     const aluno = alunoId ? listaAlunos.find(a => a.id === alunoId) : null;
@@ -124,8 +96,8 @@ function abrirModal(acao, alunoId = null) {
                 <span id="closeModal">&times;</span>
                 <h2>Login</h2>
                 <form action='/login' method="POST">
-                    <label>Username:</label><input type="text" name="username">
-                    <label>Password:</label><input type="password" name="password">
+                    <label>Username:</label><input type="text" name="username" required>
+                    <label>Password:</label><input type="password" name="password" required>
                     <button type="submit">Entrar</button>
                     <button type="button" class="cancel-button">Cancelar</button>
                 </form>`;
@@ -138,6 +110,7 @@ function abrirModal(acao, alunoId = null) {
                 <p><strong>Nome:</strong> ${aluno?.nome}</p>
                 <p><strong>Matrícula:</strong> ${aluno?.matricula}</p>
                 <div id="viewCurso"><strong>Disciplinas:</strong><ul>${gerarDisciplinas(aluno, "view")}</ul></div>
+                <p><strong>Média:</strong> ${aluno?.media || 'N/A'}</p>
                 <button class="cancel-button">Fechar</button>`;
             break;
 
@@ -149,7 +122,6 @@ function abrirModal(acao, alunoId = null) {
                 <input type="text" id="editTurma" value="${aluno?.turma || ''}">
                 <button id="confirmEdit">Salvar Alterações</button>
                 <button class="cancel-button">Cancelar</button>`;
-            
             document.getElementById('confirmEdit').onclick = () => salvarEdicao(aluno.id);
             break;
 
@@ -161,10 +133,7 @@ function abrirModal(acao, alunoId = null) {
                 <button type="button" id="addMateria">+ Matéria</button>
                 <button id="confirmEditNotas">Salvar Notas</button>
                 <button class="cancel-button">Cancelar</button>`;
-            
-            document.getElementById('addMateria').onclick = () => {
-                document.getElementById('editNotasContainer').appendChild(criarLinhaMateria());
-            };
+            document.getElementById('addMateria').onclick = () => document.getElementById('editNotasContainer').appendChild(criarLinhaMateria());
             document.getElementById('confirmEditNotas').onclick = () => salvarNotas(aluno.id);
             break;
 
@@ -175,7 +144,6 @@ function abrirModal(acao, alunoId = null) {
                 <p>Deseja remover <b>${aluno?.nome}</b>?</p>
                 <button id="confirmRemove">Remover</button>
                 <button class="cancel-button">Cancelar</button>`;
-            
             document.getElementById('confirmRemove').onclick = () => deletarAluno(aluno.id);
             break;
 
@@ -190,16 +158,17 @@ function abrirModal(acao, alunoId = null) {
                 <button type="button" id="btnNovaMateria">+ Disciplina</button>
                 <button id="confirmAdd">Adicionar Aluno</button>
                 <button class="cancel-button">Cancelar</button>`;
-
-            document.getElementById('btnNovaMateria').onclick = () => {
-                document.getElementById('addNotasContainer').appendChild(criarLinhaMateria());
-            };
+            document.getElementById('btnNovaMateria').onclick = () => document.getElementById('addNotasContainer').appendChild(criarLinhaMateria());
             document.getElementById('confirmAdd').onclick = salvarNovoAluno;
             break;
     }
 }
 
-// FUNÇÕES DE COMUNICAÇÃO COM O SERVIDOR (FETCH)
+async function realizarFetchProtegido(url, metodo, corpo, mensagem) {
+    if (!verificarAcesso()) return alert("Erro: Você perdeu a sessão de administrador.");
+    await realizarFetch(url, metodo, corpo, mensagem);
+}
+
 async function salvarNovoAluno() {
     const nome = document.getElementById('addNome').value;
     const matricula = document.getElementById('addMatricula').value;
@@ -207,48 +176,90 @@ async function salvarNovoAluno() {
     const disciplinas = coletarNotas('#addNotasContainer');
 
     if (!nome || !matricula) return alert("Preencha Nome e Matrícula!");
-
-    await realizarFetch("/alunos", "POST", { nome, matricula, turma, disciplinas });
+    await realizarFetchProtegido("/alunos", "POST", { nome, matricula, turma, disciplinas }, "Aluno adicionado!");
 }
 
 async function salvarEdicao(id) {
     const nome = document.getElementById('editNome').value;
     const turma = document.getElementById('editTurma').value;
-    await realizarFetch(`/alunos/${id}`, "PUT", { nome, turma });
+    await realizarFetchProtegido(`/alunos/${id}`, "PUT", { nome, turma }, "Aluno atualizado!");
 }
 
 async function salvarNotas(id) {
     const disciplinas = coletarNotas('#editNotasContainer');
-    await realizarFetch(`/alunos/${id}/notas`, "PUT", { disciplinas });
+    await realizarFetchProtegido(`/alunos/${id}/notas`, "PUT", { disciplinas }, "Notas atualizadas!");
 }
 
 async function deletarAluno(id) {
-    await realizarFetch(`/alunos/${id}`, "DELETE");
+    await realizarFetchProtegido(`/alunos/${id}`, "DELETE", null, "Aluno removido!");
 }
 
-// Funções utilitárias para o Fetch e coleta de dados
+function gerarDisciplinas(aluno, modo) {
+    const disciplinas = Object.entries(aluno?.disciplinas || {});
+    if (disciplinas.length === 0) return `<p class="aviso-vazio">Nenhuma disciplina.</p>`;
+
+    return disciplinas.map(([nome, nota]) => {
+        if (modo === "view") return `<li><strong>${nome.replace(/_/g, " ")}:</strong> ${nota}</li>`;
+        return `
+            <div class="input-group-nota">
+                <input type="text" value="${nome}" class="nova-materia-nome">
+                <input type="number" 
+                    step="0.1" 
+                    min="0" 
+                    max="10" 
+                    value="${nota}" 
+                    class="nova-materia-nota"
+                    oninput="if(this.value > 10) this.value = 10; if(this.value < 0) this.value = 0;">
+                <button type="button" onclick="this.parentElement.remove()">&times;</button>
+            </div>`;
+    }).join('');
+}
+
+function criarLinhaMateria() {
+    const div = document.createElement('div');
+    div.className = 'input-group-nota';
+    div.style.marginTop = "10px";
+    div.innerHTML = `
+        <input type="text" placeholder="Matéria" class="nova-materia-nome">
+        <input type="number" 
+               step="0.1" 
+               min="0" 
+               max="10" 
+               placeholder="Nota" 
+               class="nova-materia-nota"
+               oninput="if(this.value > 10) this.value = 10; if(this.value < 0) this.value = 0;">
+        <button type="button" onclick="this.parentElement.remove()">&times;</button>`;
+    return div;
+}
+
 function coletarNotas(containerId) {
     const disciplinas = {};
-    const nomes = document.querySelectorAll(`${containerId} .nova-materia-nome`);
-    const notas = document.querySelectorAll(`${containerId} .nova-materia-nota`);
-    nomes.forEach((input, i) => {
-        const nome = input.value.trim().replace(/\s+/g, '_');
-        if (nome) disciplinas[nome] = parseFloat(notas[i].value) || 0;
+    document.querySelectorAll(`${containerId} .input-group-nota`).forEach(group => {
+        const nome = group.querySelector('.nova-materia-nome').value.trim().replace(/\s+/g, '_');
+        let nota = parseFloat(group.querySelector('.nova-materia-nota').value) || 0;
+
+        if (nota > 10) nota = 10;
+        if (nota < 0) nota = 0;
+
+        if (nome) disciplinas[nome] = nota;
     });
     return disciplinas;
 }
-
-async function realizarFetch(url, metodo, corpo = null) {
+async function realizarFetch(url, metodo, corpo = null, tipo) {
     try {
-        const options = { method: metodo, headers: { "Content-Type": "application/json" } };
-        if (corpo) options.body = JSON.stringify(corpo);
-        
+        const options = {
+            method: metodo,
+            headers: { "Content-Type": "application/json" },
+            body: corpo ? JSON.stringify(corpo) : null
+        };
+
         const response = await fetch(url, options);
         if (response.ok) {
-            alert("Operação realizada!");
+            alert(tipo);
             location.reload();
         } else {
-            alert("Erro no servidor.");
+            const erroMsg = await response.text();
+            alert("Erro no servidor: " + (erroMsg || "Ação não autorizada."));
         }
     } catch (e) {
         console.error(e);
@@ -260,12 +271,8 @@ function configurarBotaoAuth() {
     const btnAuth = document.getElementById("buttonLogin");
     if (!btnAuth) return;
 
-    // Verifica se o atributo data-admin é true (indicando que está logado)
-    const estaLogado = document.body.getAttribute("data-admin") === "true";
-
-    if (estaLogado) {
+    if (verificarAcesso()) {
         btnAuth.innerText = "Logout";
-        // Altera a função do clique para fazer logout
         btnAuth.onclick = fazerLogout;
     } else {
         btnAuth.innerText = "Login";
@@ -275,12 +282,10 @@ function configurarBotaoAuth() {
 
 async function fazerLogout() {
     try {
-        // Envia a requisição de logout para o seu backend Ruby
         const response = await fetch("/logout", { method: "GET" });
-        
         if (response.ok) {
             alert("Você saiu do sistema.");
-            location.reload(); // Recarrega para limpar o estado de admin
+            location.reload();
         }
     } catch (erro) {
         console.error("Erro ao deslogar:", erro);
@@ -291,13 +296,11 @@ async function carregarOpcoesTurmas() {
     try {
         const response = await fetch("/turmas");
         listaTurmas = await response.json();
-        
         const select = document.getElementById("filtroTurma");
-        if (!select) return;
-
-        select.innerHTML = '<option value="">Todas as Turmas</option>' + 
-            listaTurmas.map(t => `<option value="${t}">${t}</option>`).join('');
-            
+        if (select) {
+            select.innerHTML = '<option value="">Todas as Turmas</option>' +
+                listaTurmas.map(t => `<option value="${t}">${t}</option>`).join('');
+        }
     } catch (erro) {
         console.error("Erro ao carregar turmas:", erro);
     }
