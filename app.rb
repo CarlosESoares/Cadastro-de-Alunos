@@ -1,318 +1,158 @@
-# encoding: utf-8
 require 'sinatra'
 require 'mongo'
 require 'bcrypt'
 require 'json'
 
+
 set :bind, '0.0.0.0'
 set :port, 4567
-
 enable :sessions
 
-use Rack::Session::Cookie, :key => 'rack.session',
-                           :path => '/',
-                           :secret => 'abacate_teste_mochila_projeto_aleatorio_segredo_muito_longo_e_seguro_123456789_extra'
+use Rack::Session::Cookie, 
+    :key => 'rack.session',
+    :path => '/',
+    :secret => 'abacate_teste_mochila_projeto_aleatorio_segredo_muito_longo_e_seguro_123456789_extra'
 
-# CONFIGURAÇÃO DE CONEXÕES
+MONGO_OPTS = { auth_source: 'projeto', max_pool_size: 5, wait_queue_timeout: 5 }
+DB_READ  = Mongo::Client.new(['100.70.14.58:27017'], MONGO_OPTS.merge(database: 'projeto', user: 'app_user', password: 'Projeto-APP-acesso'))
+DB_ADMIN = Mongo::Client.new(['100.70.14.58:27017'], MONGO_OPTS.merge(database: 'projeto', user: 'AdminApp_user', password: 'Admin-app-projetobdii'))
+
 helpers do
   def db
-    if session[:admin]
-      # Conexão de ESCRITA
-      @db_admin ||= Mongo::Client.new(['100.70.14.58:27017'], 
-                        :database => 'projeto', 
-                        :user => 'AdminApp_user', 
-                        :password => 'Admin-app-projetobdii', 
-                        :auth_source => 'projeto')
-    else
-      # Conexão de LEITURA
-      @db_read ||= Mongo::Client.new(['100.70.14.58:27017'], 
-                       :database => 'projeto', 
-                       :user => 'app_user', 
-                       :password => 'Projeto-APP-acesso', 
-                       :auth_source => 'projeto')
-    end
+    session[:admin] ? DB_ADMIN : DB_READ
   end
+
   def registrar_log(tipo_acao, info_extra = "")
-    begin
-      db[:log].insert_one({
-        usuario: session[:admin] ? "admin" : "visitante",
-        ip: request.ip,
-        metodo: request.request_method, # GET, POST, etc.
-        caminho: request.path_info,     # /deletar, /login, etc.
-        acao: tipo_acao,
-        detalhes: info_extra,
-        data_hora: Time.now.getlocal("-03:00").strftime("%d-%m-%Y/%H:%M:%S")
-      })
-    rescue => e
-      puts "Erro ao salvar log: #{e.message}"
-    end
+    db[:log].insert_one({
+      usuario: session[:admin] ? "admin" : "visitante",
+      ip: request.ip,
+      metodo: request.request_method,
+      caminho: request.path_info,
+      acao: tipo_acao,
+      detalhes: info_extra,
+      data_hora: Time.now.getlocal("-03:00").strftime("%d-%m-%Y/%H:%M:%S")
+    })
+  rescue => e
+    logger.error "Erro ao salvar log: #{e.message}"
+  end
+
+  def json_response(data, status_code = 200)
+    status status_code
+    data.to_json
   end
 end
 
-def db = Mongo::Client.new(['100.70.14.58:27017'], 
-                       :database => 'projeto', 
-                       :user => 'app_user', 
-                       :password => 'Projeto-APP-acesso', 
-                       :auth_source => 'projeto')
+before do
+  content_type :json
+end
+
+before '/alunos*' do
+  if request.request_method != 'GET' && !session[:admin]
+    registrar_log("TENTATIVA_NEGADA", "Acesso restrito")
+    halt 403, { erro: "Acesso negado" }.to_json
+  end
+end
 
 get '/' do
+  content_type :html
   erb :index
 end
 
-# Rota para obter a lista de alunos em formato JSON
 get '/alunos' do
-  content_type :json
-  begin
-    alunos = db[:alunos].find.to_a.map do |doc| 
-  { 
-    id: doc[:_id].to_s, 
-    nome: doc[:nome],
-    matricula: doc[:matricula], 
-    turma: doc[:turma],
-    disciplinas: doc[:disciplinas] || [],
-  } 
-end
-    alunos.to_json
-  rescue => e
-    puts "Erro ao buscar alunos: #{e.message}"
-    [].to_json
+  pipeline = [
+    { '$addFields' => { 'notas_array' => { '$objectToArray' => { '$ifNull' => ['$disciplinas', {}] } } } },
+    { '$addFields' => { 
+        'media' => { '$round' => [{ '$avg' => '$notas_array.v' }, 2] } 
+    }},
+    { '$project' => { 'notas_array' => 0 } }
+  ]
+  
+  alunos = db[:alunos].aggregate(pipeline).map do |aluno|
+    aluno['id'] = aluno['_id'].to_s
+    aluno
   end
-end
-#rota do listar por tudo 
-get '/alunos/turma/:turma' do
-  content_type :json
-
-  begin
-    turma = params[:turma]
-
-    alunos = db[:alunos].find({ turma: turma }).to_a
-
-    alunos.map! do |doc|
-      {
-        id: doc[:_id].to_s,
-        nome: doc[:nome],
-        matricula: doc[:matricula],
-        turma: doc[:turma],
-        disciplinas: doc[:disciplinas] || {}
-      }
-    end
-
-    alunos.to_json
-
-  rescue => e
-    puts "Erro ao buscar por turma: #{e.message}"
-    [].to_json
-  end
+  alunos.to_json
 end
 
-#rota do cadastrar
 post '/alunos' do
-  content_type :json
-
-  # 🔐 Bloqueia se não for admin
-  unless session[:admin]
-    registrar_log("TENTATIVA_NEGADA", "Tentou inserir aluno sem permissão")
-    halt 403, { erro: "Acesso negado" }.to_json
+  data = JSON.parse(request.body.read) rescue {}
+  
+  if data["nome"].to_s.empty? || data["matricula"].to_s.empty?
+    halt 400, { erro: "Nome e matrícula são obrigatórios" }.to_json
   end
 
-  begin
-    # 📥 Lê o JSON enviado pelo fetch
-    data = JSON.parse(request.body.read)
+  doc = {
+    nome: data["nome"].strip,
+    matricula: data["matricula"].strip,
+    turma: data["turma"]&.strip,
+    disciplinas: data["disciplinas"] || {}
+  }
 
-    # 🧪 Validação básica
-    nome = data["nome"]&.strip
-    matricula = data["matricula"]&.strip
-    turma = data["turma"]&.strip
-    disciplinas = data["disciplinas"] || {}
-
-    if nome.nil? || nome.empty? || matricula.nil? || matricula.empty?
-      halt 400, { erro: "Nome e matrícula são obrigatórios" }.to_json
-    end
-
-    # 💾 Inserção no banco
-    result = db[:alunos].insert_one({
-      nome: nome,
-      matricula: matricula,
-      turma: turma,
-      disciplinas: disciplinas
-    })
-
-    # 📝 Log
-    registrar_log("INSERCAO", "Aluno criado ID: #{result.inserted_id}")
-
-    # 📤 Resposta
-    status 201
-    {
-      mensagem: "Aluno criado com sucesso",
-      id: result.inserted_id.to_s
-    }.to_json
-
-  rescue => e
-    puts "Erro ao inserir aluno: #{e.message}"
-    halt 500, { erro: "Erro interno no servidor" }.to_json
-  end
+  result = db[:alunos].insert_one(doc)
+  registrar_log("INSERCAO", "Aluno ID: #{result.inserted_id}")
+  json_response({ mensagem: "Criado", id: result.inserted_id.to_s }, 201)
 end
-#rota do deletar
+
 delete '/alunos/:id' do
-  content_type :json
-
-  halt 403, { erro: "Acesso negado" }.to_json unless session[:admin]
-
   begin
-    id = params[:id]
-
-    result = db[:alunos].delete_one({ _id: BSON::ObjectId(id) })
-
-    if result.deleted_count == 0
+    oid = BSON::ObjectId.from_string(params[:id])
+    
+    aluno = db[:alunos].find_one_and_delete({ _id: oid })
+    
+    if aluno
+      aluno[:removido_em] = Time.now.getlocal("-03:00").strftime("%d-%m-%Y/%H:%M:%S")
+      db[:alunos_removidos].insert_one(aluno)
+      registrar_log("EXCLUSAO", "ID: #{params[:id]}")
+      { mensagem: "Removido com sucesso" }.to_json
+    else
       halt 404, { erro: "Aluno não encontrado" }.to_json
     end
-
-    { mensagem: "Aluno removido com sucesso" }.to_json
-
-  rescue => e
-    puts "Erro ao deletar: #{e.message}"
-    halt 500, { erro: "Erro ao deletar aluno" }.to_json
+  rescue BSON::ObjectId::Invalid
+    halt 400, { erro: "ID inválido" }.to_json
   end
 end
-
 
 put '/alunos/:id' do
-  content_type :json
+  data = JSON.parse(request.body.read) rescue {}
+  halt 400, { erro: "Nome é obrigatório" }.to_json if data["nome"].to_s.empty?
 
-  # 🔐 Verifica permissão
-  halt 403, { erro: "Acesso negado" }.to_json unless session[:admin]
+  result = db[:alunos].update_one(
+    { _id: BSON::ObjectId.from_string(params[:id]) },
+    { "$set" => { nome: data["nome"].strip, turma: data["turma"]&.strip } }
+  )
 
-  begin
-    # 📥 Lê o JSON do fetch
-    request.body.rewind
-    data = JSON.parse(request.body.read)
-
-    nome = data["nome"]&.strip
-    turma = data["turma"]&.strip
-
-    # 🧪 Validação básica
-    if nome.nil? || nome.empty?
-      halt 400, { erro: "Nome é obrigatório" }.to_json
-    end
-
-    # 💾 Atualiza SOMENTE nome e turma
-    result = db[:alunos].update_one(
-      { _id: BSON::ObjectId(params[:id]) },
-      {
-        "$set" => {
-          nome: nome,
-          turma: turma
-        }
-      }
-    )
-
-    # 🔎 Verifica se encontrou o aluno
-    if result.matched_count == 0
-      halt 404, { erro: "Aluno não encontrado" }.to_json
-    end
-
-    # 📤 Resposta
-    { mensagem: "Aluno atualizado com sucesso" }.to_json
-
-  rescue => e
-    puts "Erro ao atualizar aluno: #{e.message}"
-    halt 500, { erro: "Erro interno no servidor" }.to_json
-  end
+  result.matched_count > 0 ? { mensagem: "Atualizado" }.to_json : halt(404)
 end
 
-#rota das notas 
 put '/alunos/:id/notas' do
-  content_type :json
-
-  # 🔐 Verifica se é admin
-  halt 403, { erro: "Acesso negado" }.to_json unless session[:admin]
-
-  begin
-    # 📥 Lê o JSON enviado pelo fetch
-    request.body.rewind
-    data = JSON.parse(request.body.read)
-
-    disciplinas = data["disciplinas"] || {}
-
-    # 💾 Atualiza SOMENTE as notas
-    result = db[:alunos].update_one(
-      { _id: BSON::ObjectId(params[:id]) },
-      { "$set" => { disciplinas: disciplinas } }
-    )
-
-    # 🔎 Verifica se encontrou o aluno
-    if result.matched_count == 0
-      halt 404, { erro: "Aluno não encontrado" }.to_json
-    end
-
-    # 📤 Resposta
-    { mensagem: "Notas atualizadas com sucesso" }.to_json
-
-  rescue => e
-    puts "Erro ao atualizar notas: #{e.message}"
-    halt 500, { erro: "Erro ao atualizar notas" }.to_json
-  end
+  data = JSON.parse(request.body.read) rescue {}
+  
+  db[:alunos].update_one(
+    { _id: BSON::ObjectId.from_string(params[:id]) },
+    { "$set" => { disciplinas: data["disciplinas"] || {} } }
+  )
+  { mensagem: "Notas atualizadas" }.to_json
 end
 
-# Rota do Login
 post '/login' do
   user_doc = db[:users].find(username: params[:username]).first
+  
   if user_doc && BCrypt::Password.new(user_doc[:password_hash]) == params[:password]
     session[:admin] = true
-    registrar_log("LOGIN_SUCESSO", "Usuário #{params[:username]} logou")
+    registrar_log("LOGIN_SUCESSO", "Usuário: #{params[:username]}")
     redirect '/'
   else
-    session[:erro_login] = "Usuário ou senha inválidos"
-    registrar_log("LOGIN_FALHA", "Tentativa falha com usuário: #{params[:username]} e senha: #{params[:password]}")
+    registrar_log("LOGIN_FALHA", "Usuário: #{params[:username]}")
     redirect '/?login_error=1'
   end
 end
 
 get '/logout' do
-  # Registra que o admin está saindo antes de apagar a sessão
-  if session[:admin]
-    registrar_log("LOGOUT", "O administrador encerrou a sessão")
-  end
+  registrar_log("LOGOUT") if session[:admin]
   session.clear
   redirect '/'
 end
 
-
 get '/turmas' do
-  content_type :json
-  begin
-    turmas = db[:alunos].distinct(:turma).compact.sort
-    turmas.to_json
-  rescue => e
-    puts "Erro ao buscar turmas: #{e.message}"
-    [].to_json
-  end
+  db[:alunos].distinct(:turma).compact.sort.to_json
 end
-#  post '/inserir' do
-#    if session[:admin]
-#      result = db[:alunos].insert_one({ nome: params[:nome] })
-#      # Registra a ação
-#      registrar_log("INSERCAO", "Inseriu o aluno com id: #{result.inserted_id}")
-#      redirect '/'
-#    else
-#      # registra tentativa falha
-#      registrar_log("TENTATIVA_NEGADA", "Visitante tentou inserir aluno")
-#      halt 403, "Acesso negado"
-#    end
-#  end
-
-
-
- 
-#  # Rota para deletar um aluno
-#  get '/deletar/:id' do
-#    if session[:admin]
-#      # Registra antes de deletar para ter o ID no log
-#      registrar_log("EXCLUSAO", "Deletou o aluno com ID: #{params[:id]}")
-#      id_bson = BSON::ObjectId.from_string(params[:id])
-#      db[:alunos].delete_one({ _id: id_bson })
-#    else
-#      registrar_log("TENTATIVA_NEGADA", "Visitante tentou deletar ID: #{params[:id]}")
-#    end
-#    redirect '/'
-#  end
